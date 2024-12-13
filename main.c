@@ -31,22 +31,21 @@ dc_motor_t motor_2 = {.dc_motor[0].dc_motor_port = PORTC_INDEX,
 	.dc_motor[1].motor_status = DC_MOTOR_OFF
 };
 
-
-/*
-Timer1_t obj1 = {.Timer1_OVF_Fptr = NULL,
-				 .Timer1_OCA_Fptr = NULL,
-				 .Timer1_OCB_Fptr = NULL,
-				 .Timer1_ICU_Fptr = NULL,
-				 .Timer1_Mode = TIMER1_NORMAL_MODE,
-				 .Timer1_Prescaler = TIMER1_SCALER_8,
-				 .OC1A_Mode = OCRA_DISCONNECTED,
-				 .OC1B_Mode = OCRB_DISCONNECTED,
-				 .ICU_Edge = RISING
+ultrasonic_t ULtra1 = { .Trigger_Pin.Port = PORTD_INDEX,
+	.Trigger_Pin.Pin = PIN_0,
+	.Trigger_Pin.Direction = DIO_OUTPUT,
+	.Trigger_Pin.Logic =DIO_LOW,
+	
+	.Echo_Pin.Port = PORTD_INDEX,
+	.Echo_Pin.Pin = PIN_1,
+	.Echo_Pin.Direction = DIO_INPUT
 };
-*/
-
 
 Std_ReturnType ret = E_NOT_OK;
+uint16 dis;
+uint16 dis_right = 0;
+uint16 dis_left = 0;
+
 int main(void)
 {
 	sei();
@@ -55,6 +54,41 @@ int main(void)
 	
     while (1) 
     {
+		ret &= Ultrasonic_Calculate_Distance(&ULtra1, &dis) ;
+		_delay_ms(500);
+		
+		if(dis > STOP_DISTANCE)
+		{
+
+			Robot_Move_Forward();
+			led_Turn_on(&led_1);
+			
+		}
+		else if (dis < STOP_DISTANCE)
+		{
+			Robot_Stop();
+			ret &= Servo_Set_Angle(0);
+			_delay_ms(1000);
+			ret &= Ultrasonic_Calculate_Distance(&ULtra1, &dis_right);
+			_delay_ms(300);
+			ret &= Servo_Set_Angle(180);
+			_delay_ms(1000);
+			ret &= Ultrasonic_Calculate_Distance(&ULtra1, &dis_left);
+			_delay_ms(300);
+			ret &= Servo_Set_Angle(90);
+			if(dis_right>dis_left)
+			{
+				Robot_turn_Right90();
+				led_Turn_off(&led_1);
+			}
+			else if(dis_right<dis_left)
+			{
+				Robot_turn_Left90();
+				led_Turn_off(&led_1);
+			}
+
+		}
+		
 		
 		
     }
@@ -62,10 +96,12 @@ int main(void)
 
 void Application_Init(void)
 {
-	//ret = led_init(&led_1);
+	ret = led_init(&led_1);
 	ret &= dc_motor_init(&motor_1);
 	ret &= dc_motor_init(&motor_2);
-	ret = Servo_init();
+	ret &= Servo_init();
+	ret &= Ultrasonic_Init(&ULtra1);
+	
 }
 void Robot_Move_Forward(void)
 {

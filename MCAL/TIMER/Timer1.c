@@ -196,6 +196,31 @@ Std_ReturnType Timer1_OCB_InterruptDisable(void)
 	return Ret;
 }
 
+
+Std_ReturnType Timer1_InputCaptureEdge(ICU_Edge_type edge)
+{
+	Std_ReturnType Ret =E_NOT_OK;
+	
+	if(edge == RISING)
+	{
+		SET_BIT(TCCR1B,ICES1);
+	}
+	
+	else if(edge == FALLING)
+	{
+		CLEAR_BIT(TCCR1B,ICES1);
+	}
+	
+	Ret = E_OK;
+	
+	return Ret;
+	
+}
+
+
+/*************************************************/
+
+
 ISR(TIMER1_OVF_vect)
 {
 	if(_Timer1_OVF_ptr_!=NULL)

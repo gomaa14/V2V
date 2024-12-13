@@ -104,4 +104,6 @@ Std_ReturnType Timer1_OCB_InterruptEnable(void);
 Std_ReturnType Timer1_OCB_InterruptDisable(void);
 
 
+Std_ReturnType Timer1_InputCaptureEdge(ICU_Edge_type edge);
+
 #endif /* TIMER1_H_ */
