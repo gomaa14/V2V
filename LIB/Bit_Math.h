@@ -1,14 +1,13 @@
 /*
  * Bit_Math.h
  *
- * Created: 11/24/2024 11:54:22 AM
- *  Author: Gomaa Ayman
+ * Created: 12/13/2024 10:39:27 PM
+ *  Author: Hossam Reda
  */ 
 
 
 #ifndef BIT_MATH_H_
 #define BIT_MATH_H_
-
 
 #define BIT_MASK     (uint8_t)     1
 
@@ -33,7 +32,8 @@
 #define SET_BITS_REG(Reg,Mask)			(Reg |= (Mask))
 #define CLEAR_BITS_REG(Reg,Mask)		(Reg = (Reg&(~Mask)))
 
-
+/* Check if a specific bit is cleared in any register and return true if yes */
+#define BIT_IS_CLEAR(REG,BIT) ( !(REG & (1<<BIT)) )
 
 
 
