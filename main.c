@@ -1,8 +1,8 @@
 /*
- * V2V.c
+ * Graduation project.c
  *
- * Created: 11/24/2024 11:42:28 AM
- * Author : Gomaa Ayman 
+ * Created: 11/11/2024 9:44:34 PM
+ * Author : Hossam Reda
  */ 
 
 #define F_CPU 8000000 //8MHZ
@@ -10,8 +10,8 @@
 #include "main.h"
 
 led_t led_1 = { .port_name = PORTC_INDEX,
-				.pin_name = PIN_0,
-				.led_state = LED_ON
+	.pin_name = PIN_0,
+	.led_state = LED_ON
 	
 };
 
@@ -31,12 +31,12 @@ dc_motor_t motor_2 = {.dc_motor[0].dc_motor_port = PORTC_INDEX,
 	.dc_motor[1].motor_status = DC_MOTOR_OFF
 };
 
-ultrasonic_t ULtra1 = { .Trigger_Pin.Port = PORTD_INDEX,
+ultrasonic_t ULtra1 = { .Trigger_Pin.Port = PORTA_INDEX,
 	.Trigger_Pin.Pin = PIN_0,
 	.Trigger_Pin.Direction = DIO_OUTPUT,
 	.Trigger_Pin.Logic =DIO_LOW,
 	
-	.Echo_Pin.Port = PORTD_INDEX,
+	.Echo_Pin.Port = PORTA_INDEX,
 	.Echo_Pin.Pin = PIN_1,
 	.Echo_Pin.Direction = DIO_INPUT
 };
@@ -51,11 +51,16 @@ int main(void)
 	sei();
 	Application_Init();
 	
+	UART_TransmitString("UART Initialized!\n");
 	
-    while (1) 
-    {
-		ret &= Ultrasonic_Calculate_Distance(&ULtra1, &dis) ;
-		_delay_ms(500);
+	while (1)
+	{
+		 uint8_t received_data = UART_Receive(); // Receive data from UART
+		 
+		 ret &= Ultrasonic_Calculate_Distance(&ULtra1, &dis) ;
+		 _delay_ms(500);
+        
+		UART_Transmit(dis);          // Echo back the received data
 		
 		if(dis > STOP_DISTANCE)
 		{
@@ -88,10 +93,9 @@ int main(void)
 			}
 
 		}
-		
-		
-		
-    }
+	     
+
+}
 }
 
 void Application_Init(void)
@@ -101,6 +105,7 @@ void Application_Init(void)
 	ret &= dc_motor_init(&motor_2);
 	ret &= Servo_init();
 	ret &= Ultrasonic_Init(&ULtra1);
+    UART_Init(9600); // Initialize UART with 9600 baud rate
 	
 }
 void Robot_Move_Forward(void)
@@ -146,4 +151,3 @@ void Robot_turn_Left90(void)
 	_delay_ms(1500);
 	Robot_Stop();
 }
-

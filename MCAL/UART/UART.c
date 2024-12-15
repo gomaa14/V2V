@@ -15,131 +15,32 @@
  *                      Functions Definitions                                  *
  *******************************************************************************/
 
-/*
- * Description :
- * Functional responsible for Initialize the UART device by:
- * 1. Setup the Frame format like number of data bits, parity bit type and number of stop bits.
- * 2. Enable the UART.
- * 3. Setup the UART baud rate.
- */
-void UART_init(uint32_t baud_rate)
+void UART_Init(uint32_t baud_rate) 
 {
-	uint16 ubrr_value = 0;
-
-	/* U2X = 1 for double transmission speed */
-	UCSRA = (1<<U2X);
-
-	/************************** UCSRB Description **************************
-	 * RXCIE = 0 Disable USART RX Complete Interrupt Enable
-	 * TXCIE = 0 Disable USART Tx Complete Interrupt Enable
-	 * UDRIE = 0 Disable USART Data Register Empty Interrupt Enable
-	 * RXEN  = 1 Receiver Enable
-	 * TXEN  = 1 Transmitter Enable
-	 * UCSZ2 = 0 For 8-bit data mode
-	 * RXB8 & TXB8 not used for 8-bit data mode
-	 ***********************************************************************/ 
-	UCSRB = (1<<RXEN) | (1<<TXEN);
+	uint16_t ubrr_value = BAUD_PRESCALE(baud_rate);
+	UBRRH = (uint8_t)(ubrr_value >> 8); // Set the upper byte of the baud rate
+	UBRRL = (uint8_t)ubrr_value;       // Set the lower byte of the baud rate
 	
-	/************************** UCSRC Description **************************
-	 * URSEL   = 1 The URSEL must be one when writing the UCSRC
-	 * UMSEL   = 0 Asynchronous Operation
-	 * UPM1:0  = 00 Disable parity bit
-	 * USBS    = 0 One stop bit
-	 * UCSZ1:0 = 11 For 8-bit data mode
-	 * UCPOL   = 0 Used with the Synchronous operation only
-	 ***********************************************************************/ 	
-	UCSRC = (1<<URSEL) | (1<<UCSZ0) | (1<<UCSZ1); 
-	
-	/* Calculate the UBRR register value */
-	ubrr_value = (uint16)(((F_CPU / (baud_rate * 8UL))) - 1);
-
-	/* First 8 bits from the BAUD_PRESCALE inside UBRRL and last 4 bits in UBRRH*/
-	UBRRH = ubrr_value>>8;
-	UBRRL = ubrr_value;
+	UCSRB = (1 << RXEN) | (1 << TXEN); // Enable receiver and transmitter
+	UCSRC = (1 << URSEL) | (1 << UCSZ0) | (1 << UCSZ1); // 8-bit data, 1 stop bit, no parity
 }
 
-/*
- * Description :
- * Functional responsible for send byte to another UART device.
- */
-void UART_sendByte(const uint8_t data)
+void UART_Transmit(uint8_t data)
 {
-	/*
-	 * UDRE flag is set when the Tx buffer (UDR) is empty and ready for
-	 * transmitting a new byte so wait until this flag is set to one
-	 */
-	while(BIT_IS_CLEAR(UCSRA, UDRE)){}
-
-	/*
-	 * Put the required data in the UDR register and it also clear the UDRE flag as
-	 * the UDR register is not empty now
-	 */
-	UDR = data;
-
-	/************************* Another Method *************************
-	UDR = data;
-	while(BIT_IS_CLEAR(UCSRA,TXC)){} // Wait until the transmission is complete TXC = 1
-	SET_BIT(UCSRA,TXC); // Clear the TXC flag
-	*******************************************************************/
+	while (!(UCSRA & (1 << UDRE))); // Wait until the transmit buffer is empty
+	UDR = data; // Send the data
 }
 
-/*
- * Description :
- * Functional responsible for receive byte from another UART device.
- */
-uint8_t UART_recieveByte(void)
+uint8_t UART_Receive(void)
 {
-	/* RXC flag is set when the UART receive data so wait until this flag is set to one */
-	while(BIT_IS_CLEAR(UCSRA,RXC)){}
-
-	/*
-	 * Read the received data from the Rx buffer (UDR)
-	 * The RXC flag will be cleared after read the data
-	 */
-    return UDR;		
+	while (!(UCSRA & (1 << RXC))); // Wait until data is received
+	return UDR; // Return the received data
 }
 
-/*
- * Description :
- * Send the required string through UART to the other UART device.
- */
-void UART_sendString(const uint8_t *Str)
+void UART_TransmitString(const char *str)
 {
-	uint8_t i = 0;
-
-	/* Send the whole string */
-	while(Str[i] != '\0')
+	while (*str) 
 	{
-		UART_sendByte(Str[i]);
-		i++;
+		UART_Transmit(*str++); // Transmit each character in the string
 	}
-	/************************* Another Method *************************
-	while(*Str != '\0')
-	{
-		UART_sendByte(*Str);
-		Str++;
-	}		
-	*******************************************************************/
-}
-
-/*
- * Description :
- * Receive the required string until the '#' symbol through UART from the other UART device.
- */
-void UART_receiveString(uint8_t *Str)
-{
-	uint8_t i = 0;
-
-	/* Receive the first byte */
-	Str[i] = UART_recieveByte();
-
-	/* Receive the whole string until the '#' */
-	while(Str[i] != '#')
-	{
-		i++;
-		Str[i] = UART_recieveByte();
-	}
-
-	/* After receiving the whole string plus the '#', replace the '#' with '\0' */
-	Str[i] = '\0';
 }
