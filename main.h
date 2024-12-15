@@ -15,8 +15,9 @@
 #include "ECUL/SERVO/Servo.h"
 #include "ECUL/Ultrasonic/Ultrasonic.h"
 
+#include "MCAL/UART/UART.h"
 
-//#include "MCAL/TIMER/Timer1.h"
+
 
 
 /************Section :: Macro Declaration *************************/

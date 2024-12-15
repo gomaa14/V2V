@@ -1,8 +1,8 @@
 /*
- * Graduation project.c
+ * V2V.c
  *
- * Created: 11/11/2024 9:44:34 PM
- * Author : Hossam Reda
+ * Created: 11/24/2024 11:42:28 AM
+ * Author : Gomaa Ayman 
  */ 
 
 #define F_CPU 8000000 //8MHZ
@@ -10,8 +10,8 @@
 #include "main.h"
 
 led_t led_1 = { .port_name = PORTC_INDEX,
-	.pin_name = PIN_0,
-	.led_state = LED_ON
+				.pin_name = PIN_0,
+				.led_state = LED_ON
 	
 };
 
@@ -51,22 +51,19 @@ int main(void)
 	sei();
 	Application_Init();
 	
-	UART_TransmitString("UART Initialized!\n");
 	
-	while (1)
-	{
-		 uint8_t received_data = UART_Receive(); // Receive data from UART
-		 
-		 ret &= Ultrasonic_Calculate_Distance(&ULtra1, &dis) ;
-		 _delay_ms(500);
-        
-		UART_Transmit(dis);          // Echo back the received data
+    while (1) 
+    {
+		ret &= Ultrasonic_Calculate_Distance(&ULtra1, &dis) ;
+		_delay_ms(500);
 		
 		if(dis > STOP_DISTANCE)
 		{
 
 			Robot_Move_Forward();
 			led_Turn_on(&led_1);
+			UART_Transmit('F');
+			
 			
 		}
 		else if (dis < STOP_DISTANCE)
@@ -85,17 +82,23 @@ int main(void)
 			{
 				Robot_turn_Right90();
 				led_Turn_off(&led_1);
+				UART_Transmit('R');
+				
+				
 			}
 			else if(dis_right<dis_left)
 			{
 				Robot_turn_Left90();
 				led_Turn_off(&led_1);
+				UART_Transmit('L');
+				
 			}
 
 		}
-	     
-
-}
+		
+		
+		
+    }
 }
 
 void Application_Init(void)
@@ -105,7 +108,8 @@ void Application_Init(void)
 	ret &= dc_motor_init(&motor_2);
 	ret &= Servo_init();
 	ret &= Ultrasonic_Init(&ULtra1);
-    UART_Init(9600); // Initialize UART with 9600 baud rate
+	
+	UART_Init(9600);
 	
 }
 void Robot_Move_Forward(void)
@@ -151,3 +155,4 @@ void Robot_turn_Left90(void)
 	_delay_ms(1500);
 	Robot_Stop();
 }
+
